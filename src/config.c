@@ -8,12 +8,13 @@
 #include "keys.h"
 
 char configFilePath[256];
-char eventPath[18];
+char eventPath[4][18];
 
 int hyperKey;
 int keymap[256];
 
 int remap[256];
+int devices;
 
 /**
  * @brief Trim comment from the end of the string started by '#' character.
@@ -93,7 +94,14 @@ int isCommentOrEmpty(char* line)
  */
 void findDeviceEvent(char* deviceConfigValue)
 {
-    eventPath[0] = '\0';
+    eventPath[devices][0] = '\0';
+    if (devices >3)
+    {
+        fprintf(stderr, "error: no more then 4 devices supported");
+        return;
+    }
+    char localEventPath[18];
+    localEventPath[0] = '\0';
 
     char* deviceName = deviceConfigValue;
     int deviceNumber = getDeviceNumber(deviceName);
@@ -142,8 +150,8 @@ void findDeviceEvent(char* deviceConfigValue)
                 token = strsep(&tokens, " ");
                 if (startsWith(token, "event"))
                 {
-                    strcat(eventPath, "/dev/input/");
-                    strcat(eventPath, token);
+                    strcat(localEventPath, "/dev/input/");
+                    strcat(localEventPath, token);
                     fprintf(stdout, "info: found the keyboard event\n");
                     foundEvent = 1;
                     break;
@@ -155,6 +163,13 @@ void findDeviceEvent(char* deviceConfigValue)
     if (!foundEvent)
     {
         fprintf(stderr, "error: could not find device: %s\n", deviceConfigValue);
+    } else 
+    {
+        devices++;
+        fprintf(stdout, "info: devices %i\n", devices);
+        fprintf(stdout, "info: found local event path: %s\n", localEventPath);
+        strcat(eventPath[(devices-1)*18], localEventPath);
+        fprintf(stdout, "info: found global event path: %s\n", eventPath[(devices-1)*18]);
     }
 
     fclose(devicesFile);
@@ -176,6 +191,7 @@ static enum sections
 void readConfiguration()
 {
     // Find the configuration file
+    devices = 0;
     configFilePath[0] = '\0';
     FILE* configFile;
     char* homePath = getenv("HOME");
@@ -241,10 +257,10 @@ void readConfiguration()
         {
             case configuration_device:
                 {
-                    if (eventPath[0] == '\0')
-                    {
+                    //if (eventPath[0] == '\0')
+                    //{
                         findDeviceEvent(line);
-                    }
+                    //}
                     continue;
                 }
             case configuration_remap:

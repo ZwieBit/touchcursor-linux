@@ -13,12 +13,12 @@
  */
 #define MAX_KEYS_TO_ENABLE_KEY_EVENTS_HANDLING_FOR 572
 
-extern int input;
+extern int input[4];
 
 /**
  * Binds to the input device using ioctl.
  * */
-int bindInput(char* fileDescriptor);
+int bindInput(char* fileDescriptor, int numDevice);
 
 extern int output;
 

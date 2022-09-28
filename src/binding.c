@@ -11,7 +11,7 @@
 #include "binding.h"
 
 // The input device
-int input = -1;
+int input[4];
 
 // The output device
 int output = -1;
@@ -19,19 +19,19 @@ int output = -1;
 /**
  * Binds to the input device using ioctl.
  * */
-int bindInput(char* eventPath)
+int bindInput(char* eventPath, int numDevice)
 {
     // Open the keyboard device
     fprintf(stdout, "info: attempting to capture: '%s'\n", eventPath);
-    input = open(eventPath, O_RDONLY);
-    if (input < 0)
+    input[numDevice] = open(eventPath, O_RDONLY);
+    if (input[numDevice] < 0)
     {
         fprintf(stderr, "error: failed to open the input device: %s\n", strerror(errno));
         return EXIT_FAILURE;
     }
     // Retrieve the device name
     char keyboardName[256] = "Unknown";
-    if (ioctl(input, EVIOCGNAME(sizeof(keyboardName) - 1), keyboardName) < 0)
+    if (ioctl(input[numDevice], EVIOCGNAME(sizeof(keyboardName) - 1), keyboardName) < 0)
     {
         fprintf(stderr, "error: failed to get the device name (EVIOCGNAME: %s)\n", strerror(errno));
         return EXIT_FAILURE;
@@ -47,7 +47,7 @@ int bindInput(char* eventPath)
     // https://bugs.freedesktop.org/show_bug.cgi?id=101796
     usleep(200 * 1000);
     // Grab keys from the input device
-    if (ioctl(input, EVIOCGRAB, 1) < 0)
+    if (ioctl(input[numDevice], EVIOCGRAB, 1) < 0)
     {
         fprintf(stdout, "error: failed to capture the device (EVIOCGRAB: %s)\n", strerror(errno));
         return EXIT_FAILURE;

@@ -4,7 +4,7 @@
 /**
  * The event path for the device.
  * */
-extern char eventPath[18];
+extern char eventPath[4][18];
 
 /**
  * The hyper key;
@@ -20,6 +20,11 @@ extern int keymap[256];
  * Map for permanently remapped keys.
  * */
 extern int remap[256];
+
+/**
+ * Number of devices which are configurd
+ * */
+extern int devices;
 
 /**
  * Reads the configuration file.
