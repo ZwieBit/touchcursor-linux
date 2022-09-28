@@ -166,10 +166,7 @@ void findDeviceEvent(char* deviceConfigValue)
     } else 
     {
         devices++;
-        fprintf(stdout, "info: devices %i\n", devices);
-        fprintf(stdout, "info: found local event path: %s\n", localEventPath);
         strcat(eventPath[(devices-1)*18], localEventPath);
-        fprintf(stdout, "info: found global event path: %s\n", eventPath[(devices-1)*18]);
     }
 
     fclose(devicesFile);

@@ -7,6 +7,7 @@
 #include <linux/input.h>
 #include <string.h>
 #include <pthread.h>
+#include <stdbool.h>
 
 #include "config.h"
 #include "binding.h"
@@ -22,7 +23,7 @@ void *keyboardThreadFunc(void *vargp)
 
     struct input_event inputEvent;
     ssize_t result;
-    fprintf(stdout, "info: capturing device %i\n", val);
+    fprintf(stdout, "info: capturing device number %i\n", val);
     while (1) 
     {
         result = read(input[val], &inputEvent, sizeof(inputEvent));
@@ -56,6 +57,8 @@ void *keyboardThreadFunc(void *vargp)
 * */
 int main(int argc, char* argv[])
 { 
+    int numDevices = 0;
+
     readConfiguration();
     for (int iDevice=0;iDevice<devices;iDevice++)  
     {
@@ -66,32 +69,49 @@ int main(int argc, char* argv[])
         fprintf(stderr, localEventPath);
         fprintf(stderr, "\n");
   
+        bool isValid = true;
         if (localEventPath[0] == '\0')
         {
             fprintf(stderr, "error: please specify the keyboard device name in the configuration file\n");
-            return EXIT_FAILURE;
+            isValid = false;
+            //return EXIT_FAILURE;
         } 
         // Bind the input device
         if (bindInput(localEventPath, iDevice) != EXIT_SUCCESS)
         { 
             fprintf(stderr, "error: could not capture the keyboard device\n");
-            return EXIT_FAILURE;
+            isValid = false;
+            //return EXIT_FAILURE;
         }
 
-        int *arg = malloc(sizeof(*arg));
-        *arg = iDevice;
-        pthread_create(&thread_tid[iDevice], NULL, keyboardThreadFunc, (void*)arg);
+
+        if (isValid) 
+        {
+            int *arg = malloc(sizeof(*arg));
+            *arg = iDevice;
+            pthread_create(&thread_tid[numDevices], NULL, keyboardThreadFunc, (void*)arg);
+            numDevices++;
+        }
     }
-    // Bind the output device
-    if (bindOutput() != EXIT_SUCCESS)
-    { 
-        fprintf(stderr, "error: could not create the virtual keyboard  device\n");
-        return EXIT_FAILURE; 
+
+    if (numDevices>0) 
+    {
+        // Bind the output device
+        if (bindOutput() != EXIT_SUCCESS)
+        { 
+            fprintf(stderr, "error: could not create the virtual keyboard  device\n");
+            return EXIT_FAILURE; 
+        }
+        fprintf(stdout, "info: running\n");
+        // Read events
+        pthread_join(thread_tid[0], NULL);
+        return EXIT_SUCCESS;
+    } 
+    else 
+    {
+        return EXIT_FAILURE;
     }
-    fprintf(stdout, "info: running\n");
-    // Read events
-    //pthread_create(&thread_ids[0], NULL, keyboardThreadFunc, NULL);
-    pthread_join(thread_tid[0], NULL);
+    
 
     return EXIT_SUCCESS;
 }
